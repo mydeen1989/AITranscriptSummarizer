@@ -1,11 +1,12 @@
 import sys
 import re
 import requests
+import whisper
+from pytube import YouTube
 from bs4 import BeautifulSoup
-from youtube_transcript_api import YouTubeTranscriptApi
+from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled
 
 def extract_video_id(url):
-    # Regular expression to extract video ID from URL
     match = re.search(r"v=([a-zA-Z0-9_-]+)", url)
     if match:
         return match.group(1)
@@ -15,49 +16,47 @@ def extract_video_id(url):
 def extract_metadata(url):
     r = requests.get(url)
     soup = BeautifulSoup(r.text, features="html.parser")
-
-    link_title = soup.find_all(name="title")[0]
-    title = str(link_title)
-    title = title.replace("<title>","")
-    title = title.replace("</title>","")
-
-    link_channel = soup.find("link", itemprop="name")
-    channel = str(link_channel)
-
-    # Parse the HTML
-    soup = BeautifulSoup(channel, 'html.parser')
-
-    # Find the link tag with itemprop="name"
-    link_tag = soup.find('link', itemprop='name')
-
-    # Extract the content attribute
-    channel = link_tag['content'] if link_tag else None
-    
+    title = soup.title.string if soup.title else "Unknown Title"
+    channel_tag = soup.find("link", itemprop="name")
+    channel = channel_tag["content"] if channel_tag else "Unknown Channel"
     return title, channel
-        
+
 def download_thumbnail(video_id):
     image_url = f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg"
     img_data = requests.get(image_url).content
     with open('thumbnail.jpg', 'wb') as handler:
-        handler.write(img_data)     
-        
+        handler.write(img_data)
+
 def get_transcript(video_id):
-    transcript_raw = YouTubeTranscriptApi.get_transcript(video_id, languages=['en', 'es', 'ko'])
-    transcript_str_lst = [i['text'] for i in transcript_raw]
-    transcript_full = ' '.join(transcript_str_lst)
-    return transcript_full
+    try:
+        transcript_raw = YouTubeTranscriptApi.get_transcript(video_id, languages=['en', 'es', 'ko'])
+        transcript_str_lst = [i['text'] for i in transcript_raw]
+        return ' '.join(transcript_str_lst)
+    except TranscriptsDisabled:
+        return None
+
+def download_audio(video_url):
+    yt = YouTube(video_url)
+    audio_stream = yt.streams.filter(only_audio=True).first()
+    audio_file = audio_stream.download(filename="audio.mp4")
+    return audio_file
+
+def transcribe_audio(audio_file):
+    model = whisper.load_model("base")
+    result = model.transcribe(audio_file)
+    return result["text"]
+
+def get_transcript_or_whisper(url):
+    video_id = extract_video_id(url)
+    transcript = get_transcript(video_id)
+    if transcript:
+        return transcript
+    else:
+        audio_file = download_audio(url)
+        return transcribe_audio(audio_file)
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python script_name.py <youtube_url>") # QUOTATION MARKS AROUND URL NEEDED WHEN RUNNING ON TERMINAL
-        sys.exit(1)
-    
-    youtube_url = sys.argv[1]
-    video_id = extract_video_id(youtube_url)
+    youtube_url = input("Enter YouTube URL: ")
     title, channel = extract_metadata(youtube_url)
-    transcript = get_transcript(video_id)
-    download_thumbnail(video_id)
-    print(f"Title: {title}")
-    print(f"Channel: {channel}")
-    print('=============')
-    print(transcript)
+    transcript = get_transcript_or_whisper(youtube_url)
+    print(f"Title: {title}\nChannel: {channel}\nTranscript:\n{transcript}")
