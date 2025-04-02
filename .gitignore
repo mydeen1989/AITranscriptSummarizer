@@ -1,0 +1,5 @@
+dev.ipynb
+.ipynb_checkpoints/
+__pycache__/
+youtube_summarizer.git/
+streamlit/
