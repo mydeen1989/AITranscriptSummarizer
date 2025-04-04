@@ -5,9 +5,9 @@ import streamlit as st
 
 def summarize_text(text, lang='en'):
 
-    secrets = toml.load("streamlit/secrets.toml")
-    openai.api_key = secrets["OPENAI_API_KEY"]
-    #openai.api_key = st.secrets["OPENAI_API_KEY"]
+    #secrets = toml.load("streamlit/secrets.toml")
+    #openai.api_key = secrets["OPENAI_API_KEY"]
+    openai.api_key = st.secrets["OPENAI_API_KEY"]
     prompt = f"""
              The following text is in its original language. Provide the output in this lanuage: {lang}. 
             Format the output as follows:
