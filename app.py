@@ -51,6 +51,13 @@ def main():
             transcript = get_transcript_from_url(url)
             st.subheader("Video Transcript:")
             st.write(transcript)
+            if transcript:
+                st.download_button(
+                    label="Download Transcript",
+                    data=transcript,
+                    file_name="transcript.txt",
+                    mime="text/plain"
+                )
         else:
             st.warning("Please enter a YouTube URL.")
 
