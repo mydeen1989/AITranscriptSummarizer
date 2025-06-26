@@ -18,20 +18,23 @@ def main():
     # Display the HTML code using markdown
     st.markdown(html_code, unsafe_allow_html=True)
     
-    def get_thumbnail_from_url(url):
-        video_id = extract_video_id(url)
-        download_thumbnail(video_id)
-    
-    # Function to get transcript from URL
-    def get_transcript_from_url(url):
-        video_id = extract_video_id(url)
-        transcript = get_transcript(video_id)
-        return transcript
-
     # Interface components
     st.subheader("Enter YouTube URL:")
     st.write("Paste a YouTube link to get its transcript (must have a transcript available)")
     url = st.text_input("URL")
+
+    transcript = None
+    if url:
+        # Pre-fetch transcript for download button
+        video_id = extract_video_id(url)
+        transcript = get_transcript(video_id)
+        if transcript:
+            st.download_button(
+                label="Download Transcript",
+                data=transcript,
+                file_name="transcript.txt",
+                mime="text/plain"
+            )
 
     if st.button("Get Transcript"):
         if url:
@@ -44,20 +47,13 @@ def main():
             st.write(channel)
             
             # Display Thumbnail
-            get_thumbnail_from_url(url)
+            video_id = extract_video_id(url)
+            download_thumbnail(video_id)
             st.image(os.path.join(os.getcwd(), "thumbnail.jpg"), caption='Thumbnail', use_column_width=True) 
             
             # Display Transcript
-            transcript = get_transcript_from_url(url)
             st.subheader("Video Transcript:")
             st.write(transcript)
-            if transcript:
-                st.download_button(
-                    label="Download Transcript",
-                    data=transcript,
-                    file_name="transcript.txt",
-                    mime="text/plain"
-                )
         else:
             st.warning("Please enter a YouTube URL.")
 
