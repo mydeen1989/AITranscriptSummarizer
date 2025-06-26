@@ -1,11 +1,13 @@
 import openai
 import toml
 import streamlit as st
+import os
 
 
 def summarize_text(text, lang='en'):
 
-    #secrets = toml.load("streamlit/secrets.toml")
+    #ecrets_path = os.path.join(os.path.dirname(__file__), 'streamlit', 'secrets.toml')
+    #secrets = toml.load(secrets_path)
     #openai.api_key = secrets["OPENAI_API_KEY"]
     openai.api_key = st.secrets["OPENAI_API_KEY"]
     prompt = f"""
