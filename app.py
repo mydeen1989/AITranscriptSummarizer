@@ -1,11 +1,10 @@
 import streamlit as st
 from scrape_youtube import extract_video_id, get_transcript, extract_metadata, download_thumbnail
-from summarize_text import summarize_text
 import os
 
 def main():       
     # Define the title text and image URL
-    title_text = "OpGov Meeting Summarization"
+    title_text = "OpGov Meeting Transcript"
     image_url = "https://i.pinimg.com/originals/3a/36/20/3a36206f35352b4230d5fc9f17fcea92.png"  
 
     # Use HTML and CSS to style the title and image
@@ -19,30 +18,25 @@ def main():
     # Display the HTML code using markdown
     st.markdown(html_code, unsafe_allow_html=True)
     
-    def get_thumbnail_from_url(url):
-        video_id = extract_video_id(url)
-        download_thumbnail(video_id)
-    
-    # Function to get transcript from URL
-    def get_transcript_from_url(url):
-        video_id = extract_video_id(url)
-        transcript = get_transcript(video_id)
-        return transcript
-
-    # Function to summarize text
-    def summarize_transcript(transcript, lang):
-        summary = summarize_text(transcript, lang=lang)
-        return summary
-
     # Interface components
     st.subheader("Enter YouTube URL:")
-    st.write("Paste a YouTube link to summarize its content (must have a transcript available)")
+    st.write("Paste a YouTube link to get its transcript (must have a transcript available)")
     url = st.text_input("URL")
 
-    # Language selection
-    language = st.radio("Select language to output:", ('English', 'Spanish', 'Korean'))
+    transcript = None
+    if url:
+        # Pre-fetch transcript for download button
+        video_id = extract_video_id(url)
+        transcript = get_transcript(video_id)
+        if transcript:
+            st.download_button(
+                label="Download Transcript",
+                data=transcript,
+                file_name="transcript.txt",
+                mime="text/plain"
+            )
 
-    if st.button("Summarize"):
+    if st.button("Get Transcript"):
         if url:
             # After Button is Clicked
             # Display Title and Channel Names
@@ -53,14 +47,13 @@ def main():
             st.write(channel)
             
             # Display Thumbnail
-            get_thumbnail_from_url(url)
+            video_id = extract_video_id(url)
+            download_thumbnail(video_id)
             st.image(os.path.join(os.getcwd(), "thumbnail.jpg"), caption='Thumbnail', use_column_width=True) 
             
-            # Display Summary
-            transcript = get_transcript_from_url(url)
-            summary = summarize_transcript(transcript, language)
-            st.subheader("Video Summary:")
-            st.write(summary)
+            # Display Transcript
+            st.subheader("Video Transcript:")
+            st.write(transcript)
         else:
             st.warning("Please enter a YouTube URL.")
 

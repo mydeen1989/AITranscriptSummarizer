@@ -17,7 +17,7 @@ Simple application to generate transcript summaries from YouTube Videos
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/mydeen1989/OpGovAISummarizer
+   git clone https://github.com/mydeen1989/AITranscriptSummarizer
    ```
 
 2. **Navigate to the project directory:**
